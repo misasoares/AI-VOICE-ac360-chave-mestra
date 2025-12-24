@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/storage_service.dart';
 import 'features/home/presentation/home_screen.dart';
+import 'features/simulation/data/simulation_repository_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +16,7 @@ void main() async {
     ProviderScope(
       overrides: [
         storageServiceProvider.overrideWithValue(StorageService(prefs)),
+        sharedPreferencesProvider.overrideWithValue(prefs),
       ],
       child: const MyApp(),
     ),

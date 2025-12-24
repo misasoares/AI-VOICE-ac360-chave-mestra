@@ -219,7 +219,7 @@ class CreateProfileNotifier extends StateNotifier<ChatState> {
         } // Using user role as we are instructing the model
       ], model: 'gpt-4o-mini');
 
-      return systemPrompt;
+      return systemPrompt.content;
     } catch (e) {
       // Log error
       return null;

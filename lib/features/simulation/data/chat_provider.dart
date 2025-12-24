@@ -33,11 +33,11 @@ class ChatNotifier extends StateNotifier<List<Map<String, String>>> {
     try {
       log('ChatProvider: Sending message: $content');
       final response = await _openAIService.sendMessage(state);
-      log('ChatProvider: Received response: $response');
+      log('ChatProvider: Received response: ${response.content}');
       // Add assistant response
       state = [
         ...state,
-        {'role': 'assistant', 'content': response}
+        {'role': 'assistant', 'content': response.content}
       ];
     } catch (e) {
       // Handle error (maybe add an error message to state)
@@ -49,6 +49,7 @@ class ChatNotifier extends StateNotifier<List<Map<String, String>>> {
   }
 
   Future<String> generateFeedback() async {
-    return await _openAIService.generateFeedback(state);
+    final response = await _openAIService.generateFeedback(state);
+    return response.content;
   }
 }

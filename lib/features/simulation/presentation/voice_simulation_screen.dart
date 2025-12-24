@@ -218,9 +218,10 @@ class _VoiceSimulationScreenState extends ConsumerState<VoiceSimulationScreen> {
                             ref.read(voiceProvider.notifier).endSession();
 
                             try {
-                              final feedback = await ref
+                              final feedbackResponse = await ref
                                   .read(voiceProvider.notifier)
                                   .generateFeedback();
+                              final feedback = feedbackResponse.content;
                               if (context.mounted) {
                                 Navigator.pop(context); // Pop loading
                                 Navigator.pushReplacement(

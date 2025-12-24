@@ -9,6 +9,11 @@ import '../../settings/data/settings_provider.dart';
 import '../../lead_profiles/domain/entities/lead_profile.dart';
 import '../domain/prompt_manager.dart';
 
+import 'package:uuid/uuid.dart';
+import '../domain/entities/simulation_result.dart';
+import '../domain/repositories/simulation_repository.dart';
+import 'simulation_repository_provider.dart';
+
 final voiceProvider =
     StateNotifierProvider.autoDispose<VoiceNotifier, VoiceState>((ref) {
   final apiKey = ref.watch(apiKeyProvider);
@@ -16,7 +21,9 @@ final voiceProvider =
     log('VoiceProvider: API Key not found', name: '###');
     throw Exception('API Key not found');
   }
-  return VoiceNotifier(OpenAIService(apiKey), AudioService());
+  final simulationRepository = ref.watch(simulationRepositoryProvider);
+  return VoiceNotifier(
+      OpenAIService(apiKey), AudioService(), simulationRepository);
 });
 
 enum VoiceStatus {
@@ -35,12 +42,11 @@ class VoiceState {
   final bool isMicEnabled;
   final List<Map<String, String>> history;
   final String? errorMessage;
-
-  // VAD Configuration - REMOVED (Half-Duplex Model)
-  // static const double _vadThreshold = 0.04;
-  // static const double _vadSpeakingThresholdRatio = 4.0;
-  // static const int _vadDebounceMs = 200;
-  // static const int _vadMinDurationChunks = 3;
+  final int inputTokens;
+  final int outputTokens;
+  final double totalCost;
+  final DateTime? startTime;
+  final String? systemPrompt;
 
   VoiceState({
     this.status = VoiceStatus.disconnected,
@@ -51,11 +57,9 @@ class VoiceState {
     this.inputTokens = 0,
     this.outputTokens = 0,
     this.totalCost = 0.0,
+    this.startTime,
+    this.systemPrompt,
   });
-
-  final int inputTokens;
-  final int outputTokens;
-  final double totalCost;
 
   VoiceState copyWith({
     VoiceStatus? status,
@@ -66,6 +70,8 @@ class VoiceState {
     int? inputTokens,
     int? outputTokens,
     double? totalCost,
+    DateTime? startTime,
+    String? systemPrompt,
   }) {
     return VoiceState(
       status: status ?? this.status,
@@ -76,6 +82,8 @@ class VoiceState {
       inputTokens: inputTokens ?? this.inputTokens,
       outputTokens: outputTokens ?? this.outputTokens,
       totalCost: totalCost ?? this.totalCost,
+      startTime: startTime ?? this.startTime,
+      systemPrompt: systemPrompt ?? this.systemPrompt,
     );
   }
 }
@@ -83,12 +91,13 @@ class VoiceState {
 class VoiceNotifier extends StateNotifier<VoiceState> {
   final OpenAIService _openAIService;
   final AudioService _audioService;
+  final ISimulationRepository _simulationRepository;
   StreamSubscription? _audioSubscription;
   StreamSubscription? _eventSubscription;
 
-  // int _vadPersistenceCount = 0; // Removed
-
-  VoiceNotifier(this._openAIService, this._audioService) : super(VoiceState());
+  VoiceNotifier(
+      this._openAIService, this._audioService, this._simulationRepository)
+      : super(VoiceState());
 
   Future<void> startSession(
       ScenarioType scenarioType, LeadProfile leadProfile) async {
@@ -98,6 +107,11 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
 
       final systemPrompt =
           PromptManager.getSystemPrompt(scenarioType, leadProfile);
+
+      state = state.copyWith(
+        startTime: DateTime.now(),
+        systemPrompt: systemPrompt,
+      );
 
       // Connect to OpenAI
       await _openAIService.connectRealtime(systemPrompt);
@@ -259,9 +273,45 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
     }
   }
 
-  Future<String> generateFeedback() async {
+  Future<ChatResponse> generateFeedback() async {
     log('VoiceNotifier: Generating feedback...', name: '###');
-    return await _openAIService.generateFeedback(state.history);
+    final response = await _openAIService.generateFeedback(state.history);
+
+    // Calculate report cost
+    const double priceInput = 2.50; // gpt-4o input cost/1M
+    const double priceOutput = 10.00; // gpt-4o output cost/1M
+    const double exchangeRate = 5.54;
+
+    final double reportCostUSD = (response.inputTokens * priceInput / 1000000) +
+        (response.outputTokens * priceOutput / 1000000);
+    final double reportCostBRL = reportCostUSD * exchangeRate;
+
+    // Save simulation result
+    if (state.startTime != null) {
+      final duration = DateTime.now().difference(state.startTime!).inSeconds;
+      final result = SimulationResult(
+        id: const Uuid().v4(),
+        timestamp: state.startTime!,
+        durationSeconds: duration,
+        inputTokens: state.inputTokens,
+        outputTokens: state.outputTokens,
+        totalCost: state.totalCost,
+        systemPrompt: state.systemPrompt ?? '',
+        feedbackReport: response.content,
+        reportInputTokens: response.inputTokens,
+        reportOutputTokens: response.outputTokens,
+        reportTotalCost: reportCostBRL,
+      );
+
+      try {
+        await _simulationRepository.saveSimulation(result);
+        log('VoiceNotifier: Simulation saved successfully', name: '###');
+      } catch (e) {
+        log('VoiceNotifier: Error saving simulation: $e', name: '###');
+      }
+    }
+
+    return response;
   }
 
   void toggleMic() {
