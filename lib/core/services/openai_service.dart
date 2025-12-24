@@ -65,18 +65,6 @@ Use formatação Markdown.
     return await sendMessage(feedbackPrompt);
   }
 
-class ChatResponse {
-  final String content;
-  final int inputTokens;
-  final int outputTokens;
-
-  ChatResponse({
-    required this.content,
-    required this.inputTokens,
-    required this.outputTokens,
-  });
-}
-
   // --- Voice Chat (Realtime API) ---
   WebSocketChannel? _channel;
   final StreamController<dynamic> _eventController =
@@ -218,4 +206,16 @@ class ChatResponse {
     // But usually we want to reset it for a fresh start if the user leaves the screen
     // For now, we keep it open but maybe we should close it if the screen is disposed
   }
+}
+
+class ChatResponse {
+  final String content;
+  final int inputTokens;
+  final int outputTokens;
+
+  ChatResponse({
+    required this.content,
+    required this.inputTokens,
+    required this.outputTokens,
+  });
 }
