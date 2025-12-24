@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/openai_service.dart';
 import '../../../core/services/audio_service.dart';
 import '../../settings/data/settings_provider.dart';
+import '../../lead_profiles/domain/entities/lead_profile.dart';
 import '../domain/prompt_manager.dart';
 
 final voiceProvider =
@@ -89,14 +90,17 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
 
   VoiceNotifier(this._openAIService, this._audioService) : super(VoiceState());
 
-  Future<void> startSession(ScenarioType type) async {
+  Future<void> startSession(
+      ScenarioType scenarioType, LeadProfile leadProfile) async {
     try {
       log('VoiceNotifier: Starting session...', name: '###');
-      state =
-          state.copyWith(status: VoiceStatus.connecting, errorMessage: null);
+      state = state.copyWith(status: VoiceStatus.connecting);
+
+      final systemPrompt =
+          PromptManager.getSystemPrompt(scenarioType, leadProfile);
 
       // Connect to OpenAI
-      await _openAIService.connectRealtime(PromptManager.getSystemPrompt(type));
+      await _openAIService.connectRealtime(systemPrompt);
       if (!mounted) return;
 
       // Listen to events

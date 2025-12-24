@@ -1,3 +1,5 @@
+import '../../lead_profiles/domain/entities/lead_profile.dart';
+
 enum ScenarioType {
   coldLead,
   warmLead,
@@ -5,11 +7,25 @@ enum ScenarioType {
 }
 
 class PromptManager {
-  static String getSystemPrompt(ScenarioType type) {
-    const basePrompt = '''
+  static String getSystemPrompt(ScenarioType type, LeadProfile? profile) {
+    final profileFormatted = profile?.answers.entries
+            .map((e) => '- ${e.key}: ${e.value}')
+            .join('\n') ??
+        '';
+
+    final profileSection = profile != null
+        ? '''
+- SEU PERFIL (Siga estritamente):
+Nome: ${profile.name}
+$profileFormatted
+'''
+        : '';
+
+    final basePrompt = '''
 DEFINIÇÃO DE PAPÉIS:
 - VOCÊ é o CLIENTE (Comprador).
 - O USUÁRIO é o VENDEDOR.
+$profileSection
 
 SUA MISSÃO:
 - Aja como um cliente real interessado (ou não) em comprar.

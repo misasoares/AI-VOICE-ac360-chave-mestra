@@ -5,11 +5,16 @@ import '../../../core/constants/app_colors.dart';
 import '../../simulation/presentation/voice_simulation_screen.dart';
 import '../../simulation/presentation/scenario_selection_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+import '../../lead_profiles/presentation/screens/lead_profile_list_screen.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../lead_profiles/presentation/providers/lead_profile_list_provider.dart';
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chave Mestra RP'),
@@ -58,11 +63,104 @@ class HomeScreen extends StatelessWidget {
               title: 'Simulação por Voz',
               icon: Icons.mic_none,
               color: AppColors.accent,
+              onTap: () async {
+                try {
+                  // Show loading indicator in a dialog if fetching takes time?
+                  // Or just await. Since it's a future provider, it might be cached or quick.
+                  final profiles =
+                      await ref.read(leadProfileListProvider.future);
+
+                  if (!context.mounted) return;
+
+                  if (profiles.isEmpty) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Perfil Necessário'),
+                        content: const Text(
+                            'Você precisa criar um perfil de lead antes de iniciar a simulação por voz.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context); // Close dialog
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const LeadProfileListScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text('Criar Perfil'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    // Show selection dialog
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Selecione um Perfil'),
+                        content: SizedBox(
+                          width: double.maxFinite,
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: profiles.length,
+                            itemBuilder: (context, index) {
+                              final profile = profiles[index];
+                              return ListTile(
+                                title: Text(profile.name),
+                                leading: const Icon(Icons.person),
+                                onTap: () {
+                                  Navigator.pop(context); // Close dialog
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          VoiceSimulationScreen(
+                                        leadProfile: profile,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancelar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erro ao carregar perfis: $e')),
+                    );
+                  }
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildSimulationCard(
+              context,
+              title: 'Perfis de Leads',
+              icon: Icons.people,
+              color: Colors.blueGrey,
               onTap: () {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const VoiceSimulationScreen()));
+                        builder: (context) => const LeadProfileListScreen()));
               },
             ),
           ],
@@ -89,7 +187,7 @@ class HomeScreen extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
-              colors: [color, color.withOpacity(0.8)],
+              colors: [color, color.withValues(alpha: 0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),

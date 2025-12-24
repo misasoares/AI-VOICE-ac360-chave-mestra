@@ -6,8 +6,15 @@ import '../../simulation/presentation/feedback_screen.dart';
 import '../../../core/constants/app_colors.dart';
 import 'widgets/simulation_loading_dialog.dart';
 
+import '../../lead_profiles/domain/entities/lead_profile.dart';
+
 class VoiceSimulationScreen extends ConsumerStatefulWidget {
-  const VoiceSimulationScreen({super.key});
+  final LeadProfile leadProfile;
+
+  const VoiceSimulationScreen({
+    super.key,
+    required this.leadProfile,
+  });
 
   @override
   ConsumerState<VoiceSimulationScreen> createState() =>
@@ -20,7 +27,10 @@ class _VoiceSimulationScreenState extends ConsumerState<VoiceSimulationScreen> {
     super.initState();
     Future.microtask(() {
       if (mounted) {
-        ref.read(voiceProvider.notifier).startSession(ScenarioType.coldLead);
+        ref.read(voiceProvider.notifier).startSession(
+              ScenarioType.coldLead,
+              widget.leadProfile,
+            );
       }
     });
   }
@@ -92,7 +102,8 @@ class _VoiceSimulationScreenState extends ConsumerState<VoiceSimulationScreen> {
                       boxShadow: voiceState.status == VoiceStatus.speaking
                           ? [
                               BoxShadow(
-                                  color: AppColors.accent.withOpacity(0.5),
+                                  color:
+                                      AppColors.accent.withValues(alpha: 0.5),
                                   blurRadius: 20,
                                   spreadRadius: 5)
                             ]
@@ -133,7 +144,7 @@ class _VoiceSimulationScreenState extends ConsumerState<VoiceSimulationScreen> {
                         voiceState.lastTranscript,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 14,
                         ),
                       ),
@@ -150,10 +161,10 @@ class _VoiceSimulationScreenState extends ConsumerState<VoiceSimulationScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 24, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(
-                                color: Colors.white.withOpacity(0.3)),
+                                color: Colors.white.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -283,7 +294,7 @@ class _VoiceSimulationScreenState extends ConsumerState<VoiceSimulationScreen> {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
           border: Border.all(color: color, width: 2),
         ),
         child: Icon(icon, color: color, size: size * 0.5),
