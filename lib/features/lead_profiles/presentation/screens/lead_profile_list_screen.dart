@@ -74,9 +74,7 @@ class LeadProfileListScreen extends ConsumerWidget {
                   title: Text(profile.name),
                   subtitle:
                       Text(profile.answers['role'] ?? 'Sem cargo definido'),
-                  onTap: () {
-                    // TODO: Show profile details if needed
-                  },
+                  onTap: () => _showProfileDetails(context, profile),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     onPressed: () =>
@@ -90,6 +88,46 @@ class LeadProfileListScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) =>
             Center(child: Text('Erro ao carregar perfis: $err')),
+      ),
+    );
+  }
+
+  void _showProfileDetails(BuildContext context, LeadProfile profile) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(profile.name),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...profile.answers.entries.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(context).style,
+                      children: [
+                        TextSpan(
+                          text: '${e.key}: ',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: e.value),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+        ],
       ),
     );
   }
