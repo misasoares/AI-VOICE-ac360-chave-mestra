@@ -59,7 +59,7 @@ Use formatação Markdown.
 
   // --- Voice Chat (Realtime API) ---
   WebSocketChannel? _channel;
-  StreamController<dynamic> _eventController = StreamController.broadcast();
+  final StreamController<dynamic> _eventController = StreamController.broadcast();
   Timer? _reconnectTimer;
   bool _isExpectedDisconnect = false;
   String? _lastSystemPrompt;

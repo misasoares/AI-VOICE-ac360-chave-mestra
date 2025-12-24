@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:developer';
 import '../../../core/services/openai_service.dart';
 import '../../settings/data/settings_provider.dart';
 import '../domain/prompt_manager.dart';
@@ -18,7 +19,7 @@ class ChatNotifier extends StateNotifier<List<Map<String, String>>> {
 
   void initialize(ScenarioType type) {
     state = [
-      {'role': 'system', 'content': PromptManager.getSystemPrompt(type)},
+      {'role': 'system', 'content': PromptManager.getSystemPrompt(type, null)},
     ];
   }
 
@@ -30,9 +31,9 @@ class ChatNotifier extends StateNotifier<List<Map<String, String>>> {
     ];
 
     try {
-      print('ChatProvider: Sending message: $content');
+      log('ChatProvider: Sending message: $content');
       final response = await _openAIService.sendMessage(state);
-      print('ChatProvider: Received response: $response');
+      log('ChatProvider: Received response: $response');
       // Add assistant response
       state = [
         ...state,

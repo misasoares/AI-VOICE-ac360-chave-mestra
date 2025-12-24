@@ -45,6 +45,7 @@ dependencies:
   shared_preferences: ^2.5.3
   uuid: ^4.5.2
   sound_stream: ^0.4.2
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
