@@ -6,6 +6,7 @@ import '../../simulation/presentation/voice_simulation_screen.dart';
 import '../../simulation/presentation/scenario_selection_screen.dart';
 
 import '../../lead_profiles/presentation/screens/lead_profile_list_screen.dart';
+import '../../simulation/presentation/simulation_history_screen.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../lead_profiles/presentation/providers/lead_profile_list_provider.dart';
@@ -30,7 +31,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,6 +162,19 @@ class HomeScreen extends ConsumerWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) => const LeadProfileListScreen()));
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildSimulationCard(
+              context,
+              title: 'Análise de Simulações',
+              icon: Icons.analytics_outlined,
+              color: Colors.indigo,
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SimulationHistoryScreen()));
               },
             ),
           ],
