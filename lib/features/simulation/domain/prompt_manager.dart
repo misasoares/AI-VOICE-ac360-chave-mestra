@@ -8,6 +8,10 @@ enum ScenarioType {
 
 class PromptManager {
   static String getSystemPrompt(ScenarioType type, LeadProfile? profile) {
+    if (profile?.systemPrompt != null && profile!.systemPrompt!.isNotEmpty) {
+      return profile.systemPrompt!;
+    }
+
     final profileFormatted = profile?.answers.entries
             .map((e) => '- ${e.key}: ${e.value}')
             .join('\n') ??

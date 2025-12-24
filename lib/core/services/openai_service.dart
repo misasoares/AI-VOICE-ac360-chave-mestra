@@ -12,7 +12,8 @@ class OpenAIService {
   OpenAIService(this.apiKey);
 
   // --- Text Chat (Chat Completions) ---
-  Future<String> sendMessage(List<Map<String, String>> messages) async {
+  Future<ChatResponse> sendMessage(List<Map<String, String>> messages,
+      {String model = 'gpt-4o'}) async {
     final url = Uri.parse('https://api.openai.com/v1/chat/completions');
     final response = await http.post(
       url,
@@ -21,20 +22,27 @@ class OpenAIService {
         'Authorization': 'Bearer $apiKey',
       },
       body: jsonEncode({
-        'model': 'gpt-4o',
+        'model': model,
         'messages': messages,
       }),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return data['choices'][0]['message']['content'];
+      final content = data['choices'][0]['message']['content'];
+      final usage = data['usage'];
+      return ChatResponse(
+        content: content,
+        inputTokens: usage['prompt_tokens'],
+        outputTokens: usage['completion_tokens'],
+      );
     } else {
       throw Exception('Failed to load response: ${response.body}');
     }
   }
 
-  Future<String> generateFeedback(List<Map<String, String>> history) async {
+  Future<ChatResponse> generateFeedback(
+      List<Map<String, String>> history) async {
     final feedbackPrompt = [
       {
         'role': 'system',
@@ -57,9 +65,22 @@ Use formatação Markdown.
     return await sendMessage(feedbackPrompt);
   }
 
+class ChatResponse {
+  final String content;
+  final int inputTokens;
+  final int outputTokens;
+
+  ChatResponse({
+    required this.content,
+    required this.inputTokens,
+    required this.outputTokens,
+  });
+}
+
   // --- Voice Chat (Realtime API) ---
   WebSocketChannel? _channel;
-  final StreamController<dynamic> _eventController = StreamController.broadcast();
+  final StreamController<dynamic> _eventController =
+      StreamController.broadcast();
   Timer? _reconnectTimer;
   bool _isExpectedDisconnect = false;
   String? _lastSystemPrompt;
