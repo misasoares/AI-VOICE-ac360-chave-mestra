@@ -72,7 +72,7 @@ class _SimulationLoadingDialogState extends State<SimulationLoadingDialog> {
             const SizedBox(height: 24),
             LinearProgressIndicator(
               value: _progress,
-              backgroundColor: Colors.white.withOpacity(0.1),
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
               minHeight: 8,
               borderRadius: BorderRadius.circular(4),
@@ -85,7 +85,7 @@ class _SimulationLoadingDialogState extends State<SimulationLoadingDialog> {
                   child: Text(
                     _message,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                     maxLines: 1,
